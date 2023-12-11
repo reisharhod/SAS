@@ -1,0 +1,658 @@
+/*
+* Capstone SAS Code - Reisha Rhodenbaugh;
+
+Capstone Project Title: Analyzing the Associations between Pre- and Post-COVID-19 Pandemic Childhood ADHD Prevalence, Demographics, 
+and Environmental Factors in the United States
+
+This SAS code uses data from the annual National Survey of Children’s Health (NSCH) to analyze associations between reported childhood ADHD prevalence
+and reported environmental factors for children in the United States. Datasets from years 2019, 2020 and 2021 were used to analyze any differences in 
+these factors before and after the start and continuation of the COVID-19 pandemic. 
+
+All NSCH datasets can be accessed and downloaded using this link: https://www.childhealthdata.org/help/dataset
+
+*/
+
+* Generating a library reference ;
+libname learn '/home/u60704263/Capstone/SAS Data';
+
+
+/* ===================================== */
+
+/* ======== 2019 DATA ANALYSIS ========= */
+
+* Creating a subset of original 2019 data;
+data learn.year2019;
+	set learn.nsch2019_topical_cahmi_drc_v2;
+	* Creating new ADHD variable for HISTORY of ADHD;
+	if ADHDind_19 = 1
+	then ADHDind_19_new1 = "Does not currently have condition";
+	if ADHDind_19 = 2
+	then ADHDind_19_new1 = "Has history of ADHD";
+	if ADHDind_19 = 3
+	then ADHDind_19_new1 = "Has history of ADHD";
+	* Creating new ADHD variable for current ADHD status (PREVALENCE);
+	if ADHDind_19 = 1
+	then ADHDind_19_new2 = "Does not currently have condition";
+	if ADHDind_19 = 2
+	then ADHDind_19_new2 = "Does not currently have condition";
+	if ADHDind_19 = 3
+	then ADHDind_19_new2 = "Currently has condition";
+	*keep age3_19 ADHDind_19 ADHDind_19_new;
+	keep sex_19 age3_19 race4_19 raceAsia_19 HHLanguage_19 famstruct5_19 povlev4_19 AdultEduc_19 BornUSA_19
+	FamCount_19 MilitarySt_19 bullied_19 bully_19 ChHlthSt_19 ADHDind_19 ADHDSevInd_19 CurrIns_19 InsGap_19
+	InsAdeq_19 Insurance_19 InsMentH_19 AftSchAct_19 EventPart_19 smoking_19 ScreenTime_19 MealTogether_19 FoodSit_19 SchlSafe_19 ADHDind_19_new1 ADHDind_19_new2;
+run;
+
+* Brief inspection of the 2019 data;
+proc print
+data = learn.year2019(obs=15);
+run;
+
+
+*Running frequency tables (do for all 3 years, to summarize in 1 or 3 tables to compare);
+title1 "2019 Data";
+title2 "Contingency tables for all variables of interest";
+proc freq data=learn.year2019;
+  tables sex_19 age3_19 race4_19 raceAsia_19 HHLanguage_19 famstruct5_19 povlev4_19 AdultEduc_19 BornUSA_19
+	FamCount_19 MilitarySt_19 bullied_19 bully_19 ChHlthSt_19 ADHDind_19_new1 ADHDind_19_new2 ADHDind_19 ADHDSevInd_19 CurrIns_19 
+	InsGap_19 InsAdeq_19 Insurance_19 InsMentH_19 AftSchAct_19 EventPart_19 smoking_19 ScreenTime_19 MealTogether_19 FoodSit_19 SchlSafe_19 ; 
+run;
+
+
+proc freq data=learn.year2019;
+  tables age3_19*ADHDind_19_new2 ; 
+run;
+
+
+*run proc freq, proc means, summary statistics (compare age, sex, etc. in 2x2/3x3/contigency tables);
+
+/* ////// 2019 CHI SQUARE TESTS ////////// */
+
+*Running frequency tables;
+title1 "2019 Data - Chi Squared Test for (Current) ADHD prevalence variables ";
+proc freq data=learn.year2019;
+  *tables sex_19 * ADHDind_19_new1 / riskdiff relrisk chisq; /* longer version with all percentages */
+  tables sex_19 * ADHDind_19_new2 /  nocol norow chisq; /* shorter version with only counts */
+  tables age3_19 * ADHDind_19_new2 /  nocol norow chisq; 
+  tables race4_19 * ADHDind_19_new2 /  nocol norow chisq; 
+  tables raceAsia_19 * ADHDind_19_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * primary home lanauge;
+  tables HHLanguage_19 * ADHDind_19_new2 /  nocol norow chisq; 
+  * Chi Squared Test for (Current) ADHD prevalence * family structure;
+  tables famstruct5_19 * ADHDind_19_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * poverty level;
+  tables povlev4_19 * ADHDind_19_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * parent education;
+  tables AdultEduc_19 * ADHDind_19_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * parental nativity;
+  tables BornUSA_19 * ADHDind_19_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * number of family members;
+  tables FamCount_19 * ADHDind_19_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * military status;
+  tables MilitarySt_19 * ADHDind_19_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * bullied by others;
+  tables bullied_19 * ADHDind_19_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * bullied other kids;
+  tables bully_19 * ADHDind_19_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * child health status;
+  tables ChHlthSt_19 * ADHDind_19_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * health insurance status;
+  tables CurrIns_19 * ADHDind_19_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * consistency of health insurance coverage;
+  tables InsGap_19 * ADHDind_19_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * adequacy of current health insurance;
+  tables InsAdeq_19 * ADHDind_19_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * adequate & continuous insrance;
+  tables Insurance_19 * ADHDind_19_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * adequacy of insurance coverage for mental health;
+  tables InsMentH_19 * ADHDind_19_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * child participation in organized activities;
+  tables AftSchAct_19 * ADHDind_19_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * parent participation in child's activities;
+  tables EventPart_19 * ADHDind_19_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * household smoking;
+  tables smoking_19 * ADHDind_19_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * screen time;
+  tables ScreenTime_19 * ADHDind_19_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * food insufficiency;
+  tables FoodSit_19 * ADHDind_19_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * family eats meal together;
+  tables MealTogether_19 * ADHDind_19_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * safe school;
+  tables SchlSafe_19 * ADHDind_19_new2 /  nocol norow chisq;
+run;
+
+
+
+
+/* ////// 2019 LOGISTIC REGRESSION: UNIVARIATE PREDICTORS ////////// */
+
+* Sex as a categorical predictor ;
+proc logistic data=learn.year2019 descending;
+class sex_19(ref="Female"); 
+	model ADHDind_19_new2(ref="Does not currently have condition") = sex_19;
+run;
+
+* Age as a categorical predictor ;
+proc logistic data=learn.year2019 descending;
+class age3_19(ref="12-17 years old"); 
+	model ADHDind_19_new2(ref="Does not currently have condition") = age3_19;
+run;
+
+* Race as a categorical predictor ;
+proc logistic data=learn.year2019 descending;
+class raceAsia_19(ref="White, non-Hispanic"); 
+	model ADHDind_19_new2(ref="Does not currently have condition") = raceAsia_19;
+run;
+
+* Family structure as a categorical predictor ;
+proc logistic data=learn.year2019 descending;
+class famstruct5_19(ref="Two parents, currently married"); 
+	model ADHDind_19_new2(ref="Does not currently have condition") = famstruct5_19;
+run;
+
+* Number of family members as a categorical predictor ;
+proc logistic data=learn.year2019 descending;
+class FamCount_19(ref="6 or more people"); 
+	model ADHDind_19_new2(ref="Does not currently have condition") = FamCount_19;
+run;
+
+* Income level as a categorical predictor ;
+proc logistic data=learn.year2019 descending;
+class povlev4_19(ref="400% FPL or greater"); 
+	model ADHDind_19_new2(ref="Does not currently have condition") = povlev4_19;
+run;
+
+* Children's overall health as a categorical predictor ;
+proc logistic data=learn.year2019 descending;
+class ChHlthSt_19(ref="Excellent or very good"); 
+	model ADHDind_19_new2(ref="Does not currently have condition") = ChHlthSt_19;
+run;
+
+* Adequate & continuous health insurance as a categorical predictor ;
+proc logistic data=learn.year2019 descending;
+class Insurance_19(ref="Currently insured, consistently insured and insurance is adequate"); 
+	model ADHDind_19_new2(ref="Does not currently have condition") = Insurance_19;
+run;
+
+* Food situation as a categorical predictor ;
+proc logistic data=learn.year2019 descending;
+class FoodSit_19(ref="We could always afford to eat good nutritious meals"); 
+	model ADHDind_19_new2(ref="Does not currently have condition") = FoodSit_19;
+run;
+
+
+* Family meals as a categorical predictor ;
+proc logistic data=learn.year2019 descending;
+class MealTogether_19(ref="Every day"); 
+	model ADHDind_19_new2(ref="Does not currently have condition") = MealTogether_19;
+run;
+
+* Tobacco use in home as a categorical predictor ;
+proc logistic data=learn.year2019 descending;
+class smoking_19(ref="No"); 
+	model ADHDind_19_new2(ref="Does not currently have condition") = smoking_19;
+run;
+
+* Child screen time as a categorical predictor ;
+proc logistic data=learn.year2019 descending;
+class ScreenTime_19(ref="Less than 1 hour"); 
+	model ADHDind_19_new2(ref="Does not currently have condition") = ScreenTime_19;
+run;
+
+* Children who are bullied as a categorical predictor ;
+proc logistic data=learn.year2019 descending;
+class bullied_19(ref="Never (in the past 12 months)"); 
+	model ADHDind_19_new2(ref="Does not currently have condition") = bullied_19;
+run;
+
+* School safety as a categorical predictor ;
+proc logistic data=learn.year2019 descending;
+class SchlSafe_19(ref="Definitely agree"); 
+	model ADHDind_19_new2(ref="Does not currently have condition") = SchlSafe_19;
+run;
+
+
+
+/* ////// 2019 MULTIPLE LOGISTIC REGRESSION: MULTIVARIATE PREDICTORS ////////// */
+
+proc logistic data=learn.year2019 descending;
+class sex_19(ref="Female") age3_19(ref="12-17 years old") raceAsia_19(ref="White, non-Hispanic")
+	  famstruct5_19(ref="Two parents, currently married") FamCount_19(ref="6 or more people")
+	  povlev4_19(ref="400% FPL or greater") ChHlthSt_19(ref="Excellent or very good")
+	  Insurance_19(ref="Currently insured, consistently insured and insurance is adequate")
+	  FoodSit_19(ref="We could always afford to eat good nutritious meals")
+	  MealTogether_19(ref="Every day") smoking_19(ref="No") ScreenTime_19(ref="Less than 1 hour")
+	  bullied_19(ref="Never (in the past 12 months)") SchlSafe_19(ref="Definitely agree"); 
+	model ADHDind_19_new2(ref="Does not currently have condition") = 
+	sex_19 age3_19 raceAsia_19 famstruct5_19 FamCount_19 povlev4_19 ChHlthSt_19 Insurance_19
+	FoodSit_19 MealTogether_19 smoking_19 ScreenTime_19 bullied_19 SchlSafe_19;
+run;
+
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+
+
+
+
+/* ===================================== */
+
+/* ======== 2020 DATA ANALYSIS ========= */
+
+* Creating a subset of original 2020 data;
+data learn.year2020;
+	set learn.nsch2020_topical_cahmi_drc_v2;
+	* Creating new ADHD variable for HISTORY of ADHD;
+	if ADHDind_20 = 1
+	then ADHDind_20_new1 = "Does not currently have condition";
+	if ADHDind_20 = 2
+	then ADHDind_20_new1 = "Has history of ADHD";
+	if ADHDind_20 = 3
+	then ADHDind_20_new1 = "Has history of ADHD";
+	* Creating new ADHD variable for current ADHD status (PREVALENCE);
+	if ADHDind_20 = 1
+	then ADHDind_20_new2 = "Does not currently have condition";
+	if ADHDind_20 = 2
+	then ADHDind_20_new2 = "Does not currently have condition";
+	if ADHDind_20 = 3
+	then ADHDind_20_new2 = "Currently has condition";
+	keep sex_20 age3_20 race4_20 raceASIA_20 HHLanguage_20 famstruct5_20 povlev4_20 AdultEduc_20 BornUSA_20
+	FamCount_20 MilitarySt_20 bullied_20 bully_20 ChHlthSt_20 ADHDind_20 ADHDSevInd_20 CurrIns_20 InsGap_20 
+	InsAdeq_20 Insurance_20 InsMentH_20 AftSchAct_20 EventPart_20 smoking_20
+	ScreenTime_20 FoodSit_20 MealTogether_20 SchlSafe_20 ADHDind_20_new1 ADHDind_20_new2;
+run;
+
+* Brief inspection of the 2020 data;
+proc print
+data = learn.year2020(obs=15);
+run;
+
+*Running frequency tables;
+title1 "2020 Data";
+title2 "Contingency tables for all variables of interest";
+proc freq data=learn.year2020;
+  tables sex_20 age3_20 race4_20 raceASIA_20 HHLanguage_20 famstruct5_20 povlev4_20 AdultEduc_20 BornUSA_20
+	FamCount_20 MilitarySt_20 bullied_20 bully_20 ChHlthSt_20 ADHDind_20_new1 ADHDind_20_new2 ADHDind_20 ADHDSevInd_20 
+	CurrIns_20 Insurance_20 smoking_20 ScreenTime_20 FoodSit_20 MealTogether_20 SchlSafe_20; 
+run;
+
+*run proc freq, proc means, summary statistics (compare age, sex, etc. in 2x2/3x3/contigency tables);
+
+
+
+/* ////// 2020 CHI SQUARE TESTS ////////// */
+
+*Running frequency tables;
+title1 "2020 Data - Chi Squared Test for (Current) ADHD prevalence variables ";
+proc freq data=learn.year2020;
+  *tables sex_20 * ADHDind_20_new1 / riskdiff relrisk chisq; /* longer version with all percentages */
+  tables sex_20 * ADHDind_20_new2 /  nocol norow chisq; /* shorter version with only counts */
+  tables age3_20 * ADHDind_20_new2 /  nocol norow chisq; 
+  tables race4_20 * ADHDind_20_new2 /  nocol norow chisq; 
+  tables raceAsia_20 * ADHDind_20_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * primary home lanauge;
+  tables HHLanguage_20 * ADHDind_20_new2 /  nocol norow chisq; 
+  * Chi Squared Test for (Current) ADHD prevalence * family structure;
+  tables famstruct5_20 * ADHDind_20_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * poverty level;
+  tables povlev4_20 * ADHDind_20_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * parent education;
+  tables AdultEduc_20 * ADHDind_20_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * parental nativity;
+  tables BornUSA_20 * ADHDind_20_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * number of family members;
+  tables FamCount_20 * ADHDind_20_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * military status;
+  tables MilitarySt_20 * ADHDind_20_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * bullied by others;
+  tables bullied_20 * ADHDind_20_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * bullied other kids;
+  tables bully_20 * ADHDind_20_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * child health status;
+  tables ChHlthSt_20 * ADHDind_20_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * health insurance status;
+  tables CurrIns_20 * ADHDind_20_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * consistency of health insurance coverage;
+  tables InsGap_20 * ADHDind_20_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * adequacy of current health insurance;
+  tables InsAdeq_20 * ADHDind_20_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * adequate & continuous insrance;
+  tables Insurance_20 * ADHDind_20_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * adequacy of insurance coverage for mental health;
+  tables InsMentH_20 * ADHDind_20_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * child participation in organized activities;
+  tables AftSchAct_20 * ADHDind_20_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * parent participation in child's activities;
+  tables EventPart_20 * ADHDind_20_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * household smoking;
+  tables smoking_20 * ADHDind_20_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * screen time;
+  tables ScreenTime_20 * ADHDind_20_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * food insufficiency;
+  tables FoodSit_20 * ADHDind_20_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * family eats meal together;
+  tables MealTogether_20 * ADHDind_20_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * safe school;
+  tables SchlSafe_20 * ADHDind_20_new2 /  nocol norow chisq;
+run;
+
+
+
+
+/* ////// 2020 LOGISTIC REGRESSION: UNIVARIATE PREDICTORS ////////// */
+
+* Sex as a categorical predictor ;
+proc logistic data=learn.year2020 descending;
+class sex_20(ref="Female"); 
+	model ADHDind_20_new2(ref="Does not currently have condition") = sex_20;
+run;
+
+* Age as a categorical predictor ;
+proc logistic data=learn.year2020 descending;
+class age3_20(ref="12-17 years old"); 
+	model ADHDind_20_new2(ref="Does not currently have condition") = age3_20;
+run;
+
+* Race as a categorical predictor ;
+proc logistic data=learn.year2020 descending;
+class raceAsia_20(ref="White, non-Hispanic"); 
+	model ADHDind_20_new2(ref="Does not currently have condition") = raceAsia_20;
+run;
+
+* Family structure as a categorical predictor ;
+proc logistic data=learn.year2020 descending;
+class famstruct5_20(ref="Two parents, currently married"); 
+	model ADHDind_20_new2(ref="Does not currently have condition") = famstruct5_20;
+run;
+
+* Number of family members as a categorical predictor ;
+proc logistic data=learn.year2020 descending;
+class FamCount_20(ref="6 or more people"); 
+	model ADHDind_20_new2(ref="Does not currently have condition") = FamCount_20;
+run;
+
+* Income level as a categorical predictor ;
+proc logistic data=learn.year2020 descending;
+class povlev4_20(ref="400% FPL or greater"); 
+	model ADHDind_20_new2(ref="Does not currently have condition") = povlev4_20;
+run;
+
+* Children's overall health as a categorical predictor ;
+proc logistic data=learn.year2020 descending;
+class ChHlthSt_20(ref="Excellent or very good"); 
+	model ADHDind_20_new2(ref="Does not currently have condition") = ChHlthSt_20;
+run;
+
+* Adequate & continuous health insurance as a categorical predictor ;
+proc logistic data=learn.year2020 descending;
+class Insurance_20(ref="Currently insured, consistently insured and insurance is adequate"); 
+	model ADHDind_20_new2(ref="Does not currently have condition") = Insurance_20;
+run;
+
+* Food situation as a categorical predictor ;
+proc logistic data=learn.year2020 descending;
+class FoodSit_20(ref="We could always afford to eat good nutritious meals"); 
+	model ADHDind_20_new2(ref="Does not currently have condition") = FoodSit_20;
+run;
+
+* Family meals as a categorical predictor ;
+proc logistic data=learn.year2020 descending;
+class MealTogether_20(ref="Every day"); 
+	model ADHDind_20_new2(ref="Does not currently have condition") = MealTogether_20;
+run;
+
+* Tobacco use in home as a categorical predictor ;
+proc logistic data=learn.year2020 descending;
+class smoking_20(ref="No"); 
+	model ADHDind_20_new2(ref="Does not currently have condition") = smoking_20;
+run;
+
+* Child screen time as a categorical predictor ;
+proc logistic data=learn.year2020 descending;
+class ScreenTime_20(ref="Less than 1 hour"); 
+	model ADHDind_20_new2(ref="Does not currently have condition") = ScreenTime_20;
+run;
+
+* Children who are bullied as a categorical predictor ;
+proc logistic data=learn.year2020 descending;
+class bullied_20(ref="Never (in the past 12 months)"); 
+	model ADHDind_20_new2(ref="Does not currently have condition") = bullied_20;
+run;
+
+* School safety as a categorical predictor ;
+proc logistic data=learn.year2020 descending;
+class SchlSafe_20(ref="Definitely agree"); 
+	model ADHDind_20_new2(ref="Does not currently have condition") = SchlSafe_20;
+run;
+
+
+
+/* ////// 2020 MULTIPLE LOGISTIC REGRESSION: MULTIVARIATE PREDICTORS ////////// */
+
+proc logistic data=learn.year2020 descending;
+class sex_20(ref="Female") age3_20(ref="12-17 years old") raceAsia_20(ref="White, non-Hispanic")
+	  famstruct5_20(ref="Two parents, currently married") FamCount_20(ref="6 or more people")
+	  povlev4_20(ref="400% FPL or greater") ChHlthSt_20(ref="Excellent or very good")
+	  Insurance_20(ref="Currently insured, consistently insured and insurance is adequate")
+	  FoodSit_20(ref="We could always afford to eat good nutritious meals")
+	  MealTogether_20(ref="Every day") smoking_20(ref="No") ScreenTime_20(ref="Less than 1 hour")
+	  bullied_20(ref="Never (in the past 12 months)") SchlSafe_20(ref="Definitely agree"); 
+	model ADHDind_20_new2(ref="Does not currently have condition") = 
+	sex_20 age3_20 raceAsia_20 famstruct5_20 FamCount_20 povlev4_20 ChHlthSt_20 Insurance_20
+	FoodSit_20 MealTogether_20 smoking_20 ScreenTime_20 bullied_20 SchlSafe_20;
+run;
+
+
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+
+
+/* ===================================== */
+
+/* ======== 2021 DATA ANALYSIS ========= */
+
+* Creating a subset of original 2021 data;
+data learn.year2021;
+	set learn.nsch2021_topical_cahmi_drc;
+	* Creating new ADHD variable for HISTORY of ADHD;
+	if ADHDind_21 = 1
+	then ADHDind_21_new1 = "Does not currently have condition";
+	if ADHDind_21 = 2
+	then ADHDind_21_new1 = "Has history of ADHD";
+	if ADHDind_21 = 3
+	then ADHDind_21_new1 = "Has history of ADHD";
+	* Creating new ADHD variable for current ADHD status (PREVALENCE);
+	if ADHDind_21 = 1
+	then ADHDind_21_new2 = "Does not currently have condition";
+	if ADHDind_21 = 2
+	then ADHDind_21_new2 = "Does not currently have condition";
+	if ADHDind_21 = 3
+	then ADHDind_21_new2 = "Currently has condition";
+	keep sex_21 age3_21 race4_21 raceAsia_21 HHLanguage_21 famstruct5_21 povlev4_21 AdultEduc_21 BornUSA_21
+	FamCount_21 MilitarySt_21 bullied_21 bully_21 ChHlthSt_21 ADHDind_21 ADHDSevInd_21 CurrIns_21 InsGap_21 
+	InsAdeq_21 Insurance_21 InsMentH_21 AftSchAct_21 EventPart_21 smoking_21
+	ScreenTime_21 FoodSit_21 MealTogether_21 SchlSafe_21 ADHDind_21_new1 ADHDind_21_new2 ;
+run;
+
+* Brief inspection of the 2021 data;
+proc print
+data = learn.year2021(obs=15);
+run;
+
+*Running frequency tables;
+title1 "2021 Data";
+title2 "Contingency tables for all variables of interest";
+proc freq data=learn.year2021;
+  tables sex_21 age3_21 race4_21 raceAsia_21 HHLanguage_21 famstruct5_21 povlev4_21 AdultEduc_21 BornUSA_21
+	FamCount_21 MilitarySt_21 bullied_21 bully_21 ChHlthSt_21 ADHDind_21_new1 ADHDind_21_new2 ADHDind_21 ADHDSevInd_21 
+	CurrIns_21 InsGap_21 InsAdeq_21 Insurance_21 InsMentH_21 AftSchAct_21 EventPart_21 smoking_21
+	ScreenTime_21 FoodSit_21 MealTogether_21 SchlSafe_21; 
+run;
+
+
+
+*run proc freq, proc means, summary statistics (compare age, sex, etc. in 2x2/3x3/contigency tables);
+
+/* ////// 2021 CHI SQUARE TESTS ////////// */
+
+*Running frequency tables;
+title1 "2021 Data - Chi Squared Test for (Current) ADHD prevalence variables ";
+proc freq data=learn.year2021;
+  *tables sex_21 * ADHDind_21_new1 / riskdiff relrisk chisq; /* longer version with all percentages */
+  tables sex_21 * ADHDind_21_new2 /  nocol norow chisq; /* shorter version with only counts */
+  tables age3_21 * ADHDind_21_new2 /  nocol norow chisq; 
+  tables race4_21 * ADHDind_21_new2 /  nocol norow chisq; 
+  tables raceAsia_21 * ADHDind_21_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * primary home lanauge;
+  tables HHLanguage_21 * ADHDind_21_new2 /  nocol norow chisq; 
+  * Chi Squared Test for (Current) ADHD prevalence * family structure;
+  tables famstruct5_21 * ADHDind_21_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * poverty level;
+  tables povlev4_21 * ADHDind_21_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * parent education;
+  tables AdultEduc_21 * ADHDind_21_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * parental nativity;
+  tables BornUSA_21 * ADHDind_21_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * number of family members;
+  tables FamCount_21 * ADHDind_21_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * military status;
+  tables MilitarySt_21 * ADHDind_21_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * bullied by others;
+  tables bullied_21 * ADHDind_21_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * bullied other kids;
+  tables bully_21 * ADHDind_21_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * child health status;
+  tables ChHlthSt_21 * ADHDind_21_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * health insurance status;
+  tables CurrIns_21 * ADHDind_21_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * consistency of health insurance coverage;
+  tables InsGap_21 * ADHDind_21_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * adequacy of current health insurance;
+  tables InsAdeq_21 * ADHDind_21_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * adequate & continuous insrance;
+  tables Insurance_21 * ADHDind_21_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * adequacy of insurance coverage for mental health;
+  tables InsMentH_21 * ADHDind_21_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * child participation in organized activities;
+  tables AftSchAct_21 * ADHDind_21_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * parent participation in child's activities;
+  tables EventPart_21 * ADHDind_21_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * household smoking;
+  tables smoking_21 * ADHDind_21_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * screen time;
+  tables ScreenTime_21 * ADHDind_21_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * food insufficiency;
+  tables FoodSit_21 * ADHDind_21_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * family eats meal together;
+  tables MealTogether_21 * ADHDind_21_new2 /  nocol norow chisq;
+  * Chi Squared Test for (Current) ADHD prevalence * safe school;
+  tables SchlSafe_21 * ADHDind_21_new2 /  nocol norow chisq;
+run;
+
+
+
+
+/* ////// 2021 LOGISTIC REGRESSION: UNIVARIATE PREDICTORS ////////// */
+
+* Sex as a categorical predictor ;
+proc logistic data=learn.year2021 descending;
+class sex_21(ref="Female"); 
+	model ADHDind_21_new2(ref="Does not currently have condition") = sex_21;
+run;
+
+* Age as a categorical predictor ;
+proc logistic data=learn.year2021 descending;
+class age3_21(ref="12-17 years old"); 
+	model ADHDind_21_new2(ref="Does not currently have condition") = age3_21;
+run;
+
+* Race as a categorical predictor ;
+proc logistic data=learn.year2021 descending;
+class raceAsia_21(ref="White, non-Hispanic"); 
+	model ADHDind_21_new2(ref="Does not currently have condition") = raceAsia_21;
+run;
+
+* Family structure as a categorical predictor ;
+proc logistic data=learn.year2021 descending;
+class famstruct5_21(ref="Two parents, currently married"); 
+	model ADHDind_21_new2(ref="Does not currently have condition") = famstruct5_21;
+run;
+
+* Number of family members as a categorical predictor ;
+proc logistic data=learn.year2021 descending;
+class FamCount_21(ref="6 or more people"); 
+	model ADHDind_21_new2(ref="Does not currently have condition") = FamCount_21;
+run;
+
+* Income level as a categorical predictor ;
+proc logistic data=learn.year2021 descending;
+class povlev4_21(ref="400% FPL or greater"); 
+	model ADHDind_21_new2(ref="Does not currently have condition") = povlev4_21;
+run;
+
+* Children's overall health as a categorical predictor ;
+proc logistic data=learn.year2021 descending;
+class ChHlthSt_21(ref="Excellent or very good"); 
+	model ADHDind_21_new2(ref="Does not currently have condition") = ChHlthSt_21;
+run;
+
+* Adequate & continuous health insurance as a categorical predictor ;
+proc logistic data=learn.year2021 descending;
+class Insurance_21(ref="Currently insured, consistently insured and insurance is adequate"); 
+	model ADHDind_21_new2(ref="Does not currently have condition") = Insurance_21;
+run;
+
+* Food situation as a categorical predictor ;
+proc logistic data=learn.year2021 descending;
+class FoodSit_21(ref="We could always afford to eat good nutritious meals"); 
+	model ADHDind_21_new2(ref="Does not currently have condition") = FoodSit_21;
+run;
+
+* Family meals as a categorical predictor ;
+proc logistic data=learn.year2021 descending;
+class MealTogether_21(ref="Every day"); 
+	model ADHDind_21_new2(ref="Does not currently have condition") = MealTogether_21;
+run;
+
+* Tobacco use in home as a categorical predictor ;
+proc logistic data=learn.year2021 descending;
+class smoking_21(ref="No"); 
+	model ADHDind_21_new2(ref="Does not currently have condition") = smoking_21;
+run;
+
+* Child screen time as a categorical predictor ;
+proc logistic data=learn.year2021 descending;
+class ScreenTime_21(ref="Less than 1 hour"); 
+	model ADHDind_21_new2(ref="Does not currently have condition") = ScreenTime_21;
+run;
+
+* Children who are bullied as a categorical predictor ;
+proc logistic data=learn.year2021 descending;
+class bullied_21(ref="Never (in the past 12 months)"); 
+	model ADHDind_21_new2(ref="Does not currently have condition") = bullied_21;
+run;
+
+* School safety as a categorical predictor ;
+proc logistic data=learn.year2021 descending;
+class SchlSafe_21(ref="Definitely agree"); 
+	model ADHDind_21_new2(ref="Does not currently have condition") = SchlSafe_21;
+run;
+
+
+
+/* ////// 2021 MULTIPLE LOGISTIC REGRESSION: MULTIVARIATE PREDICTORS ////////// */
+
+proc logistic data=learn.year2021 descending;
+class sex_21(ref="Female") age3_21(ref="12-17 years old") raceAsia_21(ref="White, non-Hispanic")
+	  famstruct5_21(ref="Two parents, currently married") FamCount_21(ref="6 or more people")
+	  povlev4_21(ref="400% FPL or greater") ChHlthSt_21(ref="Excellent or very good")
+	  Insurance_21(ref="Currently insured, consistently insured and insurance is adequate")
+	  FoodSit_21(ref="We could always afford to eat good nutritious meals")
+	  MealTogether_21(ref="Every day") smoking_21(ref="No") ScreenTime_21(ref="Less than 1 hour")
+	  bullied_21(ref="Never (in the past 12 months)") SchlSafe_21(ref="Definitely agree"); 
+	model ADHDind_21_new2(ref="Does not currently have condition") = 
+	sex_21 age3_21 raceAsia_21 famstruct5_21 FamCount_21 povlev4_21 ChHlthSt_21 Insurance_21
+	FoodSit_21 MealTogether_21 smoking_21 ScreenTime_21 bullied_21 SchlSafe_21;
+run;
