@@ -8,6 +8,8 @@ This SAS code uses data from the annual National Survey of Children’s Health (
 and reported environmental factors for children in the United States. Datasets from years 2019, 2020 and 2021 were used to analyze any differences in 
 these factors before and after the start and continuation of the COVID-19 pandemic. 
 
+Descriptive statistics are performed, and univariate and multivariate logistic regression models are run to perform comparisons across all three years.
+
 All NSCH datasets can be accessed and downloaded using this link: https://www.childhealthdata.org/help/dataset
 
 */
